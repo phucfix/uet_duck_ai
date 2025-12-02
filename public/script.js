@@ -1,56 +1,71 @@
 // Chờ cho toàn bộ trang web được tải xong
 document.addEventListener('DOMContentLoaded', () => {
-    const chatForm = document.getElementById('chat-form');
-    const userInput = document.getElementById('user-input');
-    const chatBox = document.getElementById('chat-box');
+  const chatForm  = document.getElementById('chat-form');
+  const userInput = document.getElementById('user-input');
+  const chatBox   = document.getElementById('chat-box');
 
-    // Địa chỉ Back-end của bạn
-    const backendUrl = 'http://localhost:3000/chat';
+  // Vì index.html đang được serve từ http://localhost:4000
+  // nên ta dùng đường dẫn tương đối:
+  const backendUrl = '/chat';
 
-    // Xử lý khi người dùng gửi tin nhắn
-    chatForm.addEventListener('submit', async (e) => {
-        e.preventDefault(); // Ngăn trang web tải lại
+  chatForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
 
-        const userMessage = userInput.value.trim();
-        if (userMessage === '') return;
+    const userMessage = userInput.value.trim();
+    if (!userMessage) return;
 
-        // Hiển thị tin nhắn của người dùng
-        addMessage(userMessage, 'user');
-        userInput.value = ''; // Xóa nội dung trong ô nhập liệu
+    // Hiển thị tin nhắn của người dùng
+    addMessage(userMessage, 'user');
+    userInput.value = '';
 
-        try {
-            // Gửi tin nhắn đến Back-end
-            const response = await fetch(backendUrl, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ prompt: userMessage }),
-            });
+    try {
+      const response = await fetch(backendUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        // 🚩 KEY PHẢI LÀ "prompt" ĐÚNG VỚI server.js
+        body: JSON.stringify({ prompt: userMessage }),
+      });
 
-            if (!response.ok) {
-                throw new Error('Lỗi từ máy chủ');
-            }
+      if (!response.ok) {
+        const errText = await response.text();
+        console.error('Response not OK:', response.status, errText);
+        addMessage('Xin lỗi, server đang lỗi: ' + response.status, 'ai');
+        return;
+      }
 
-            const data = await response.json();
+      let data;
+      try {
+        data = await response.json();
+      } catch (err) {
+        console.error('Không parse được JSON:', err);
+        addMessage('Xin lỗi, mình không đọc được phản hồi từ server.', 'ai');
+        return;
+      }
 
-            // Hiển thị tin nhắn trả về từ AI (Gemini)
-            addMessage(data.response, 'ai');
+      console.log('API data:', data);
 
-        } catch (error) {
-            console.error('Lỗi khi gọi API:', error);
-            addMessage('Xin lỗi, mình gặp chút trục trặc. Bạn thử lại sau nhé!', 'ai');
-        }
-    });
+      // Lấy nội dung trả lời từ field "response"
+      const botText =
+        (typeof data.response === 'string' && data.response.trim().length > 0)
+          ? data.response
+          : '[Không nhận được nội dung trả lời từ server]';
 
-    // Hàm trợ giúp để thêm tin nhắn vào khung chat
-    function addMessage(text, sender) {
-        const messageElement = document.createElement('div');
-        messageElement.classList.add('message', sender);
-        messageElement.innerHTML = `<p>${text}</p>`; // Dùng innerHTML hoặc textContent
-        chatBox.appendChild(messageElement);
+      addMessage(botText, 'ai');
 
-        // Tự động cuộn xuống tin nhắn mới nhất
-        chatBox.scrollTop = chatBox.scrollHeight;
+    } catch (error) {
+      console.error('Lỗi khi gọi API:', error);
+      addMessage('Xin lỗi, mình gặp chút trục trặc. Bạn thử lại sau nhé!', 'ai');
     }
+  });
+
+  // Hàm thêm tin nhắn vào khung chat
+  function addMessage(text, sender) {
+    const messageElement = document.createElement('div');
+    messageElement.classList.add('message', sender);
+    messageElement.innerHTML = `<p>${text}</p>`;
+    chatBox.appendChild(messageElement);
+    chatBox.scrollTop = chatBox.scrollHeight;
+  }
 });
