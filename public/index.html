@@ -6,25 +6,39 @@
     <title>UET AI</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
+    <link rel="icon" href="/favicon.ico" />
 </head>
 <body>
     <div class="app-container">
         <header class="app-header">
-            <h1>UET AI 🦆🧡🧡🧡</h1>
-            </header>
-
-        <main id="chat-box" class="chat-box">
-            <div class="message ai">
-                <span class="sender-label">ddb</span>
-                <p>Quack! I'm the UETAI Duck. I'm here to help you debug. Tell me, what problem are you working on? What is your code supposed to do?</p>
+            <div class="brand">
+                <div class="logo" aria-hidden="true">🦆</div>
+                <h1>UET AI</h1>
             </div>
-            
-            </main>
 
-        <form id="chat-form" class="chat-form">
-            <input type="text" id="user-input" placeholder="Ask a question" autocomplete="off">
-            <button type="submit">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
+            <div class="user-area">
+                <div class="hearts" id="hearts" aria-hidden="true">♥♥♥</div>
+                <a id="auth-link" href="/auth/github" class="auth-link">Sign in</a>
+            </div>
+        </header>
+
+        <main id="chat-box" class="chat-box" aria-live="polite">
+            <div class="message ai">
+                <div class="meta">
+                    <div class="avatar">🦆</div>
+                    <div class="info">
+                        <span class="sender-label">UET Duck</span>
+                        <time class="time" datetime="">now</time>
+                    </div>
+                </div>
+                <div class="content"><p>Quack! Tôi là UET AI Duck — hỏi mình điều bạn muốn biết về code, bài tập, hoặc debug nhé.</p></div>
+            </div>
+        </main>
+
+        <form id="chat-form" class="chat-form" role="search" aria-label="Chat form">
+            <input type="text" id="user-input" placeholder="Hỏi mình điều gì đó..." autocomplete="off" aria-label="Message input">
+            <button type="submit" aria-label="Send message">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
                     <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path>
                 </svg>
             </button>
