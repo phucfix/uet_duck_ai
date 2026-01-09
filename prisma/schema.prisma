@@ -1,0 +1,122 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String         @id @default(cuid())
+  githubId      String         @unique
+  username      String
+  email         String?
+  avatarUrl     String?
+  // OAuth access token from GitHub (store securely; consider encrypting at rest)
+  githubAccessToken String?
+  // Comma-separated scopes granted for the stored access token
+  githubTokenScopes String?
+  // When the token was last updated
+  githubAccessTokenUpdatedAt DateTime?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  
+  // Số lượt hỏi cho UET Duck AI
+  duckLimit     Int            @default(5)
+
+  enrollments   Enrollment[]
+  submissions   Submission[]
+}
+
+model Course {
+  id            String         @id @default(cuid())
+  title         String
+  description   String?
+  slug          String         @unique
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  
+  weeks         Week[]
+  enrollments   Enrollment[]
+}
+
+model Week {
+  id            String         @id @default(cuid())
+  courseId      String
+  weekNumber    Int
+  title         String
+  description   String?
+  createdAt     DateTime       @default(now())
+  
+  course        Course         @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  submissions   Submission[]
+  assignments   Assignment[]
+  
+  @@unique([courseId, weekNumber])
+}
+
+model Assignment {
+  id          String   @id @default(cuid())
+  weekId      String
+  title       String
+  slug        String   @unique
+  description String?
+  createdAt   DateTime @default(now())
+
+  week        Week     @relation(fields: [weekId], references: [id], onDelete: Cascade)
+  submissions Submission[]
+  workspaceRuns WorkspaceRun[]
+}
+
+
+model Enrollment {
+  id            String         @id @default(cuid())
+  userId        String
+  courseId      String
+  enrolledAt    DateTime       @default(now())
+  
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course        Course         @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, courseId])
+}
+
+model Submission {
+  id            String         @id @default(cuid())
+  userId        String
+  weekId        String?
+  assignmentId  String
+  content       String
+  submittedAt   DateTime       @default(now())
+  
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  week          Week?          @relation(fields: [weekId], references: [id], onDelete: Cascade)
+  assignment    Assignment     @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, assignmentId])
+}
+
+// WorkspaceRun stores small records produced by Codespaces after running checks
+// or when a user submits (e.g., via pushing to `submit` branch). The webhook
+// handler will create these records by cloning the pushed repo and reading
+// the `.check50/result.json` file (if present).
+model WorkspaceRun {
+  id           String   @id @default(cuid())
+  githubLogin  String?
+  repoFullName String
+  branch       String?
+  tool         String
+  status       String
+  summary      String?
+  rawResult    Json?
+  // Optional grading fields
+  passed       Int?
+  total        Int?
+  score        Float?    // normalized score (e.g., percentage or points)
+  maxScore     Float?    // e.g., 100.0
+  commitSha    String?
+  assignmentId String?
+  assignment   Assignment? @relation(fields: [assignmentId], references: [id])
+  createdAt    DateTime @default(now())
+}
